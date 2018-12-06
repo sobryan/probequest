@@ -63,5 +63,8 @@ setup(
             'sphinx-argparse >= 0.2.2',
             'sphinx_rtd_theme',
         ],
+        'ci': [
+            'packagecore >= 0.10.0',
+        ]
     },
 )
