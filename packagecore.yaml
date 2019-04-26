@@ -1,0 +1,19 @@
+name: probequest
+maintainer: Paul-Emmanuel Raoul <skyper@skyplabs.net>
+license: GPLv3
+summary: Toolkit for Playing with Wi-Fi Probe Requests
+homepage: https://github.com/SkypLabs/probequest
+commands:
+  install: |
+    PYTHONPATH=${BP_DESTDIR}/lib/python3.5/site-packages python3 setup.py install --prefix ${BP_DESTDIR}
+  testinstall: |
+    probequest -h
+packages:
+  debian9:
+    deps:
+      - python-scapy
+      - python3-netaddr
+      - python3-urwid
+    builddeps:
+      - python3-pip
+      - python3-setuptools
