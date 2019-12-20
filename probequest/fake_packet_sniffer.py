@@ -2,72 +2,92 @@
 Fake packet sniffer module.
 """
 
-from threading import Thread, Event
+from time import sleep
 
 from scapy.layers.dot11 import RadioTap, Dot11, Dot11ProbeReq, Dot11Elt
+from scapy.pipetool import ThreadGenSource
 
 from faker import Faker
 from faker_wifi_essid import WifiESSID
 
 
-class FakePacketSniffer(Thread):
+class FakePacketSniffer(ThreadGenSource):
     """
-    A fake packet sniffing thread.
+    A fake packet sniffer.
 
-    This thread returns fake Wi-Fi ESSIDs for development and test purposes.
+    This pipe source sends periodically fake Wi-Fi ESSIDs for development and
+    test purposes.
     """
 
-    def __init__(self, config, new_packets):
-        super().__init__()
+    def __init__(self, period, period2=0, name=None):
+        ThreadGenSource.__init__(self, name=name)
 
-        self.config = config
-        self.new_packets = new_packets
+        self.fake_probe_requests = FakeProbeRequest()
+        self.period = period
+        self.period2 = period2
 
-        self.stop_sniffer = Event()
+    def generate(self):
+        while self.RUN:
+            empty_gen = True
 
-        self.fake = Faker()
-        self.fake.add_provider(WifiESSID)
+            # Infinite loop until 'stop()' is called.
+            for fake_probe_req in self.fake_probe_requests:
+                empty_gen = False
+                self._gen_data(fake_probe_req)
+                sleep(self.period)
 
-    def run(self):
-        from time import sleep
+            if empty_gen:
+                self.is_exhausted = True
+                self._wake_up()
 
-        while not self.stop_sniffer.isSet():
-            sleep(1)
-            self.new_packet()
-
-    def join(self, timeout=None):
-        """
-        Stops the fake packet sniffer.
-        """
-
-        self.stop_sniffer.set()
-        super().join(timeout)
+            sleep(self.period2)
 
     def stop(self):
-        """
-        Stops the fake packet sniffer.
+        ThreadGenSource.__init__(self)
+        self.fake_probe_requests.stop()
 
-        Alias for 'join()'.
-        """
 
-        self.join()
+class FakeProbeRequest:
+    """
+    A fake probe request iterator.
+    """
 
-    def new_packet(self):
+    def __init__(self):
+        self._fake = Faker()
+        self._fake.add_provider(WifiESSID)
+
+        self._should_stop = False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
         """
-        Adds a new fake packet to the queue to be processed.
+        Generator of fake Wi-Fi probe requests.
         """
 
         # pylint: disable=no-member
 
-        fake_probe_req = RadioTap() \
+        if self._should_stop:
+            raise StopIteration
+
+        return RadioTap() \
             / Dot11(
                 addr1="ff:ff:ff:ff:ff:ff",
-                addr2=self.fake.mac_address(),
-                addr3=self.fake.mac_address()
+                addr2=self._fake.mac_address(),
+                addr3=self._fake.mac_address()
             ) \
             / Dot11ProbeReq() \
             / Dot11Elt(
-                info=self.fake.wifi_essid()
+                info=self._fake.wifi_essid()
             )
 
-        self.new_packets.put(fake_probe_req)
+    def stop(self):
+        """
+        Interrupts the iteration.
+
+        The next time the iterator will be called, a 'StopIteration' exception
+        will be raised.
+        """
+
+        self._should_stop = True

@@ -9,9 +9,18 @@ your wireless interface.
 # pylint: disable=no-name-in-module
 
 from argparse import ArgumentParser, FileType
+from time import sleep
+
+from scapy.pipetool import PipeEngine
+from scapy.pipetool import ConsoleSink
 
 from probequest.config import Config, Mode
 from probequest.version import VERSION
+
+from probequest.packet_sniffer import PacketSniffer
+from probequest.probe_request_parser import ProbeRequestParser
+from probequest.probe_request_filter import ProbeRequestFilter
+from probequest.probe_request_console import ProbeRequestConsole
 
 
 def get_arg_parser():
@@ -104,45 +113,31 @@ def main():
     if not geteuid() == 0:
         sys_exit("[!] You must be root")
 
-    # Default mode.
-    if config.mode == Mode.RAW:
-        from time import sleep
-        from probequest.ui.raw import RawProbeRequestViewer
+    sniffer = PacketSniffer(config)
+    parser = ProbeRequestParser(config)
+    filters = ProbeRequestFilter(config)
+    console = ProbeRequestConsole()
 
-        try:
-            print("[*] Start sniffing probe requests...")
-            raw_viewer = RawProbeRequestViewer(config)
-            raw_viewer.start()
+    engine = PipeEngine(sniffer)
 
-            while True:
-                sleep(100)
-        except OSError:
-            raw_viewer.stop()
-            sys_exit(
-                "[!] Interface {interface} doesn't exist".format(
-                    interface=config.interface
-                )
+    sniffer > parser > filters > console
+
+    try:
+        print("[*] Start sniffing probe requests...")
+        engine.start()
+        while True:
+            sleep(100)
+    except OSError:
+        engine.stop()
+        sys_exit(
+            "[!] Interface {interface} doesn't exist".format(
+                interface=config.interface
             )
-        except KeyboardInterrupt:
-            print("[*] Stopping the threads...")
-            raw_viewer.stop()
-            print("[*] Bye!")
-    elif config.mode == Mode.PNL:
-        from probequest.ui.pnl import PNLViewer
-
-        try:
-            pnl_viewer = PNLViewer(config)
-            pnl_viewer.main()
-        except OSError:
-            sys_exit(
-                "[!] Interface {interface} doesn't exist".format(
-                    interface=config.interface
-                )
-            )
-        except KeyboardInterrupt:
-            pnl_viewer.sniffer.stop()
-    else:
-        sys_exit("[x] Invalid mode")
+        )
+    except KeyboardInterrupt:
+        print("[*] Stopping the engine...")
+        engine.wait_and_stop()
+        print("[*] Bye!")
 
 
 if __name__ == "__main__":
