@@ -12,7 +12,6 @@ from argparse import ArgumentParser, FileType
 from time import sleep
 
 from scapy.pipetool import PipeEngine
-from scapy.pipetool import ConsoleSink
 
 from probequest.config import Config, Mode
 from probequest.version import VERSION
