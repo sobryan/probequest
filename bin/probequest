@@ -17,6 +17,7 @@ from probequest.config import Config, Mode
 from probequest.version import VERSION
 
 from probequest.packet_sniffer import PacketSniffer
+from probequest.fake_packet_sniffer import FakePacketSniffer
 from probequest.probe_request_parser import ProbeRequestParser
 from probequest.probe_request_filter import ProbeRequestFilter
 from probequest.probe_request_console import ProbeRequestConsole
@@ -98,6 +99,29 @@ def get_arg_parser():
     return arg_parser
 
 
+def build_cluster(config):
+    """
+    Build the ProbeQuest cluster.
+    """
+
+    # pylint: disable=pointless-statement
+
+    if config.fake:
+        sniffer = FakePacketSniffer(1)
+    else:
+        sniffer = PacketSniffer(config)
+
+    parser = ProbeRequestParser(config)
+    filters = ProbeRequestFilter(config)
+    console = ProbeRequestConsole()
+
+    engine = PipeEngine(sniffer)
+
+    sniffer > parser > filters > console
+
+    return engine
+
+
 def main():
     """
     Main function.
@@ -112,14 +136,7 @@ def main():
     if not geteuid() == 0:
         sys_exit("[!] You must be root")
 
-    sniffer = PacketSniffer(config)
-    parser = ProbeRequestParser(config)
-    filters = ProbeRequestFilter(config)
-    console = ProbeRequestConsole()
-
-    engine = PipeEngine(sniffer)
-
-    sniffer > parser > filters > console
+    engine = build_cluster(config)
 
     try:
         print("[*] Start sniffing probe requests...")
