@@ -17,6 +17,9 @@ class FakePacketSniffer(ThreadGenSource):
 
     This pipe source sends periodically fake Wi-Fi ESSIDs for development and
     test purposes.
+
+    This class inherits from 'ThreadGenSource' and not from
+    'PeriodicSource' as this last one only accepts lists, sets and tuples.
     """
 
     def __init__(self, period, period2=0, name=None):
@@ -28,22 +31,18 @@ class FakePacketSniffer(ThreadGenSource):
 
     def generate(self):
         while self.RUN:
-            empty_gen = True
-
             # Infinite loop until 'stop()' is called.
             for fake_probe_req in self.fake_probe_requests:
-                empty_gen = False
                 self._gen_data(fake_probe_req)
                 sleep(self.period)
 
-            if empty_gen:
-                self.is_exhausted = True
-                self._wake_up()
+            self.is_exhausted = True
+            self._wake_up()
 
             sleep(self.period2)
 
     def stop(self):
-        ThreadGenSource.__init__(self)
+        ThreadGenSource.stop(self)
         self.fake_probe_requests.stop()
 
 
