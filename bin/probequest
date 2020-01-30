@@ -23,6 +23,7 @@ from probequest.fake_packet_sniffer import FakePacketSniffer
 from probequest.probe_request_parser import ProbeRequestParser
 from probequest.probe_request_filter import ProbeRequestFilter
 from probequest.probe_request_console import ProbeRequestConsole
+from probequest.probe_request_csv_exporter import ProbeRequestCSVExporter
 
 
 def get_arg_parser():
@@ -121,6 +122,10 @@ def build_cluster(config):
 
     sniffer > parser > filters > console
 
+    if config.output_file:
+        csv_exporter = ProbeRequestCSVExporter(config)
+        filters > csv_exporter
+
     return engine
 
 
@@ -153,6 +158,9 @@ def main():
         print("[*] Stopping the engine...")
         engine.stop()
         print("[*] Bye!")
+    finally:
+        if config.output_file is not None:
+            config.output_file.close()
 
 
 if __name__ == "__main__":

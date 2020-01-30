@@ -7,7 +7,7 @@ from csv import writer
 from scapy.pipetool import Sink
 
 
-class CSVExporter(Sink):
+class ProbeRequestCSVExporter(Sink):
     """
     A probe request CSV exporting sink.
     """
@@ -18,18 +18,14 @@ class CSVExporter(Sink):
         self.csv_file = config.output_file
         self.csv_writer = None
 
-    def start(self):
         if self.csv_file is not None:
             self.csv_writer = writer(self.csv_file, delimiter=";")
 
-    def stop(self):
-        if self.csv_file is not None:
-            self.csv_file.close()
-
     def push(self, msg):
-        self.csv_writer.writerow([
-            msg.timestamp,
-            msg.s_mac,
-            msg.s_mac_oui,
-            msg.essid
-        ])
+        if self.csv_writer is not None:
+            self.csv_writer.writerow([
+                msg.timestamp,
+                msg.s_mac,
+                msg.s_mac_oui,
+                msg.essid
+            ])
