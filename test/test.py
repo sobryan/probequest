@@ -5,20 +5,16 @@ Unit tests written with the 'unittest' module.
 # pylint: disable=import-error
 # pylint: disable=unused-variable
 
-from queue import Queue
+from re import compile as rcompile, IGNORECASE
 import unittest
 import pylint.lint
 from netaddr.core import AddrFormatError
 
 from scapy.layers.dot11 import RadioTap, Dot11, Dot11ProbeReq, Dot11Elt
 from scapy.packet import fuzz
-from scapy.error import Scapy_Exception
 
 from probequest.config import Config
 from probequest.probe_request import ProbeRequest
-from probequest.probe_request_sniffer import ProbeRequestSniffer
-from probequest.packet_sniffer import PacketSniffer
-from probequest.fake_packet_sniffer import FakePacketSniffer
 from probequest.probe_request_parser import ProbeRequestParser
 
 
@@ -173,8 +169,6 @@ class TestConfig(unittest.TestCase):
         Tests 'complile_essid_regex' with a case-sensitive regex.
         """
 
-        from re import compile as rcompile
-
         config = Config()
         config.essid_regex = "Free Wi-Fi"
         compiled_regex = config.complile_essid_regex()
@@ -186,8 +180,6 @@ class TestConfig(unittest.TestCase):
         Tests 'complile_essid_regex' with a case-insensitive regex.
         """
 
-        from re import compile as rcompile, IGNORECASE
-
         config = Config()
         config.essid_regex = "Free Wi-Fi"
         config.ignore_case = True
@@ -195,166 +187,6 @@ class TestConfig(unittest.TestCase):
 
         self.assertEqual(compiled_regex, rcompile(
             config.essid_regex, IGNORECASE))
-
-
-class TestProbeRequestSniffer(unittest.TestCase):
-    """
-    Unit tests for the 'ProbeRequestSniffer' class.
-    """
-
-    def test_without_parameters(self):
-        """
-        Initialises a 'ProbeRequestSniffer' object without parameters.
-        """
-
-        # pylint: disable=no-value-for-parameter
-
-        with self.assertRaises(TypeError):
-            sniffer = ProbeRequestSniffer()  # noqa: F841
-
-    def test_bad_parameter(self):
-        """
-        Initialises a 'ProbeRequestSniffer' object with a bad parameter.
-        """
-
-        # pylint: disable=no-value-for-parameter
-
-        with self.assertRaises(AttributeError):
-            sniffer = ProbeRequestSniffer("test")  # noqa: F841
-
-    def test_create_sniffer(self):
-        """
-        Creates a 'ProbeRequestSniffer' object with the correct parameter.
-        """
-
-        # pylint: disable=no-self-use
-
-        config = Config()
-        sniffer = ProbeRequestSniffer(config)  # noqa: F841
-
-    def test_stop_before_start(self):
-        """
-        Creates a 'ProbeRequestSniffer' object and stops the sniffer before
-        starting it.
-        """
-
-        # pylint: disable=no-self-use
-
-        config = Config()
-        sniffer = ProbeRequestSniffer(config)
-        sniffer.stop()
-
-
-class TestPacketSniffer(unittest.TestCase):
-    """
-    Unit tests for the 'PacketSniffer' class.
-    """
-
-    def test_new_packet(self):
-        """
-        Tests the 'new_packet' method.
-        """
-
-        config = Config()
-        new_packets = Queue()
-        sniffer = PacketSniffer(config, new_packets)
-
-        self.assertEqual(sniffer.new_packets.qsize(), 0)
-
-        packet = RadioTap() \
-            / Dot11(
-                addr1="ff:ff:ff:ff:ff:ff",
-                addr2="aa:bb:cc:11:22:33",
-                addr3="dd:ee:ff:11:22:33"
-            ) \
-            / Dot11ProbeReq() \
-            / Dot11Elt(
-                info="Test"
-            )
-
-        sniffer.new_packet(packet)
-        self.assertEqual(sniffer.new_packets.qsize(), 1)
-
-        ProbeRequestParser.parse(sniffer.new_packets.get(timeout=1))
-
-    def test_stop_before_start(self):
-        """
-        Creates a 'PacketSniffer' object and stops the sniffer before starting
-        it.
-        """
-
-        config = Config()
-        new_packets = Queue()
-        sniffer = PacketSniffer(config, new_packets)
-
-        with self.assertRaises(Scapy_Exception):
-            sniffer.stop()
-
-    def test_is_running_before_start(self):
-        """
-        Creates a 'PacketSniffer' object and runs 'is_running' before starting
-        the sniffer.
-        """
-
-        config = Config()
-        new_packets = Queue()
-        sniffer = PacketSniffer(config, new_packets)
-
-        self.assertFalse(sniffer.is_running())
-
-
-class TestFakePacketSniffer(unittest.TestCase):
-    """
-    Unit tests for the 'FakePacketSniffer' class.
-    """
-
-    def test_new_packet(self):
-        """
-        Tests the 'new_packet' method.
-        """
-
-        config = Config()
-        new_packets = Queue()
-        sniffer = FakePacketSniffer(config, new_packets)
-
-        self.assertEqual(sniffer.new_packets.qsize(), 0)
-
-        sniffer.new_packet()
-        self.assertEqual(sniffer.new_packets.qsize(), 1)
-        sniffer.new_packet()
-        self.assertEqual(sniffer.new_packets.qsize(), 2)
-        sniffer.new_packet()
-        self.assertEqual(sniffer.new_packets.qsize(), 3)
-
-        ProbeRequestParser.parse(sniffer.new_packets.get(timeout=1))
-        ProbeRequestParser.parse(sniffer.new_packets.get(timeout=1))
-        ProbeRequestParser.parse(sniffer.new_packets.get(timeout=1))
-
-    def test_stop_before_start(self):
-        """
-        Creates a 'FakePacketSniffer' object and stops the sniffer before
-        starting it.
-        """
-
-        config = Config()
-        new_packets = Queue()
-        sniffer = FakePacketSniffer(config, new_packets)
-
-        with self.assertRaises(RuntimeError):
-            sniffer.stop()
-
-    def test_stop_before_start_using_join(self):
-        """
-        Creates a 'FakePacketSniffer' object and stops the sniffer before
-        starting it.
-        """
-
-        config = Config()
-        new_packets = Queue()
-        sniffer = FakePacketSniffer(config, new_packets)
-
-        with self.assertRaises(RuntimeError):
-            sniffer.join()
 
 
 class TestProbeRequestParser(unittest.TestCase):
