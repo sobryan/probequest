@@ -23,7 +23,7 @@ from probequest.fake_packet_sniffer import FakePacketSniffer
 from probequest.probe_request_parser import ProbeRequestParser
 from probequest.probe_request_filter import ProbeRequestFilter
 from probequest.ui.console import ProbeRequestConsole
-from probequest.probe_request_csv_exporter import ProbeRequestCSVExporter
+from probequest.exporters.csv import ProbeRequestCSVExporter
 
 
 def get_arg_parser():
