@@ -42,43 +42,6 @@ class Config:
     fake = False
     debug = False
 
-    _display_func = lambda *args: None  # noqa: E731
-    _storage_func = lambda *args: None  # noqa: E731
-
-    @property
-    def display_func(self):
-        """
-        Callback function triggered when a packet needs to be displayed.
-        """
-
-        return self._display_func
-
-    @property
-    def storage_func(self):
-        """
-        Callback function triggered when a packet needs to be stored.
-        """
-
-        return self._storage_func
-
-    @display_func.setter
-    def display_func(self, func):
-        if not hasattr(func, "__call__"):
-            raise TypeError(
-                "The display function property is not a callable object"
-            )
-
-        self._display_func = func
-
-    @storage_func.setter
-    def storage_func(self, func):
-        if not hasattr(func, "__call__"):
-            raise TypeError(
-                "The storage function property is not a callable object"
-            )
-
-        self._storage_func = func
-
     def generate_frame_filter(self):
         """
         Generates and returns the frame filter according to the different

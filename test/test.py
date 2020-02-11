@@ -113,24 +113,6 @@ class TestConfig(unittest.TestCase):
     Unit tests for the 'Config' class.
     """
 
-    def test_bad_display_function(self):
-        """
-        Assigns a non-callable object to the display callback function.
-        """
-
-        with self.assertRaises(TypeError):
-            config = Config()
-            config.display_func = "test"
-
-    def test_bad_storage_function(self):
-        """
-        Assigns a non-callable object to the storage callback function.
-        """
-
-        with self.assertRaises(TypeError):
-            config = Config()
-            config.storage_func = "test"
-
     def test_default_frame_filter(self):
         """
         Tests the default frame filter.
