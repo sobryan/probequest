@@ -209,7 +209,8 @@ class TestProbeRequestParser(unittest.TestCase):
                 addr3="dd:ee:ff:11:22:33"
             )
 
-        ProbeRequestParser.parse(packet)
+        with self.assertRaises(TypeError):
+            ProbeRequestParser.parse(packet)
 
     def test_empty_essid(self):
         """
@@ -241,8 +242,14 @@ class TestProbeRequestParser(unittest.TestCase):
         # pylint: disable=no-self-use
 
         for i in range(0, 1000):
-            packet = RadioTap()/fuzz(Dot11()/Dot11ProbeReq()/Dot11Elt())
-            ProbeRequestParser.parse(packet)
+            with self.subTest():
+                try:
+                    packet = RadioTap() / \
+                        fuzz(Dot11()/Dot11ProbeReq()/Dot11Elt())
+                    ProbeRequestParser.parse(packet)
+                except TypeError:
+                    # Expected behaviour.
+                    pass
 
 
 class TestLinter(unittest.TestCase):
