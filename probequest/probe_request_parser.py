@@ -30,7 +30,7 @@ class ProbeRequestParser(Thread):
         self.stop_parser = Event()
 
     def run(self):
-        self.logger.debug("Starting the probe request parser")
+        #self.logger.debug("Starting the probe request parser")
 
         # The parser continues to do its job even after the call of the
         # join method if the queue is not empty.
@@ -67,7 +67,7 @@ class ProbeRequestParser(Thread):
         Stops the probe request parsing thread.
         """
 
-        self.logger.debug("Stopping the probe request parser")
+        #self.logger.debug("Stopping the probe request parser")
 
         self.stop_parser.set()
         super().join(timeout)

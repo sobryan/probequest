@@ -19,9 +19,9 @@ class ProbeRequest:
         self._s_mac_oui = None
 
     def __str__(self):
-        return "\"timestamp\" : \"{timestamp}\", \"mac\" : \"{s_mac}\", \"mac-oui\" : \"{s_mac_oui}\", \"essid\" : \"{essid}\"".format(
+        return "{\"timestamp\" : \"{timestamp}\", \"mac\" : \"{s_mac}\", \"mac-oui\" : \"{s_mac_oui}\", \"essid\" : \"{essid}\"}".format(
                 timestamp=strftime(
-                    "%a, %d %b %Y %H:%M:%S %Z",
+                    "%Y-%m-%dT%H:%M:%S.%L%z",
                     localtime(self.timestamp)
                 ),
                 s_mac=self.s_mac,
